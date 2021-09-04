@@ -1,0 +1,82 @@
+"""
+DSC 530-T302
+week 3
+Exercise 1-2 Page 11: Created file that reads the repsondent file 2002FemResp.dat.gz. That prints the value counts for the variable pregnum and compares them to the published results in the NSFG codebook and cross validates the respondent and pregnancy files. Creates a dictionary that maps each caseid to a list of indices.
+Author: Theodore Koby-Hercsky
+06/16/2021
+"""
+
+"""This file contains code for use with "Think Stats",
+by Allen B. Downey, available from greenteapress.com
+
+Copyright 2010 Allen B. Downey
+License: GNU GPLv3 http://www.gnu.org/licenses/gpl.html
+"""
+
+from __future__ import print_function, division
+
+import sys
+import numpy as np
+import thinkstats2
+import nsfg
+
+from collections import defaultdict
+
+# Below we use the read function to read the respondent data from the NSFG dct and dat files and returns the DataFrame
+
+
+def ReadFemResp(dct_file='2002FemResp.dct',
+                dat_file='2002FemResp.dat.gz',
+                nrows=None):
+
+    dct = thinkstats2.ReadStataDct(dct_file)
+    df = dct.ReadFixedWidth(dat_file, compression='gzip', nrows=nrows)
+    CleanFemResp(df)
+    return df
+
+# Next we record the variables from the repsondent frame and allows it to pass through.
+
+def CleanFemResp(df):
+    
+    pass
+
+# Next we validate the pregnum in the respondent file for the respondent DataFrame.
+
+def ValidatePregnum(resp):
+    # First we will need to pull and read the pregnancy data frame
+    preg = nsfg.ReadFemPreg()
+    
+    # Next we will have to make the map from the caseid to the list of pregnancy indices from the pregnancy DataFrame
+    preg_map = nsfg.MakePregMap(preg)
+    print(preg_map)
+    
+    # Following we will iterate through the respondent pregnum series as seen in the nsfg python file
+    for index, pregnum in resp.pregnum.iteritems():
+        caseid = resp.caseid[index]
+        indices = preg_map[caseid]
+        print("Case ID Indices Pregnum")
+        print(caseid, len(indices), pregnum)
+
+        # Next we continue to use the nsfg python code to check that pregnum from the respondent file equals that the number of records in the pregnancy file. As seen below we see if the reposndent file does not equal the number from the pregnancy file the code will return false. 
+        if len(indices) != pregnum:
+            print(caseid, len(indices), pregnum)
+            return False
+
+    return True
+
+# Next the Main is defined which tests the functions 
+
+def main(script):
+    # First the main function reads and validates the respondent file and asserts and validates the Pregnum to the resp. Then validate that the pregnum column in `resp`.
+    resp = ReadFemResp()
+
+    assert(len(resp) == 7643)
+    assert(resp.pregnum.value_counts()[1] == 1267)
+    assert(ValidatePregnum(resp))
+
+    print('%s: All tests passed.' % script)
+
+
+if __name__ == '__main__':
+    main(*sys.argv)
+
